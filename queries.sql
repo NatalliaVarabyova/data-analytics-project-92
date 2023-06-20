@@ -80,3 +80,28 @@ SELECT
   FROM customers c
  GROUP BY age_category
  ORDER BY age_category;
+ 
+ /* Step 6.2. Looking for the income from customers and their number per month.*/
+ WITH tab AS (
+    SELECT
+        TO_CHAR(s.sale_date, 'YYYY-MM') AS date,
+        -- finding out a month of year
+        c.customer_id AS customer_id,
+        SUM(s.quantity * p.price) AS customer_income
+        -- looking for the total income from every customer per month
+    FROM customers AS c
+    LEFT JOIN sales AS s
+        ON c.customer_id = s.customer_id
+    INNER JOIN products AS p
+        ON p.product_id = s.product_id
+    GROUP BY TO_CHAR(s.sale_date, 'YYYY-MM'), c.customer_id
+    ORDER BY TO_CHAR(s.sale_date, 'YYYY-MM')
+)
+SELECT
+    date,
+    COUNT(customer_id) AS total_customers,
+    -- counting the number of unique customers
+    SUM(customer_income) AS income
+    -- looking for the total income from all customer per month
+FROM tab
+GROUP BY date;
