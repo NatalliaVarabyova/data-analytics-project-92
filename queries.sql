@@ -10,7 +10,7 @@ SELECT
     -- combining first_name and last_name into one line
     COUNT(s.sales_id) AS operations,
     -- counting how many operations were done
-    SUM(s.quantity * p.price) AS income
+    ROUND(SUM(s.quantity * p.price), 0) AS income
     -- looking for the total income for all of the operations for every single seller
 FROM employees e
 LEFT JOIN sales s
@@ -51,8 +51,8 @@ to join the table 'employees' with the table 'sales' and the table sales with th
 SELECT
     CONCAT(e.first_name, ' ', e.last_name) AS name,
     -- combine first_name and last_name into one line
-    TO_CHAR(s.sale_date, 'day') AS weekday,
-    -- finding out a day of week
+    CONCAT(TO_CHAR(s.sale_date, 'ID'), ' ', TO_CHAR(s.sale_date, 'Day')) AS weekday,
+    -- finding out the weekday number where the day of the week as Monday (1) to Sunday (7) and a day of week
     ROUND(SUM(s.quantity * p.price), 0) AS income
     -- looking for the total income for every seller
 FROM employees e
@@ -61,12 +61,10 @@ LEFT JOIN sales s
 LEFT JOIN products p
     ON s.product_id = p.product_id
 GROUP BY
-    TO_CHAR(s.sale_date, 'day'),
-    CONCAT(e.first_name, ' ', e.last_name),
-    EXTRACT(ISODOW FROM s.sale_date)
-    -- looking for the weekday number where the day of the week as Monday (1) to Sunday (7)
+    CONCAT(TO_CHAR(s.sale_date, 'ID'), ' ', TO_CHAR(s.sale_date, 'Day')),
+    CONCAT(e.first_name, ' ', e.last_name)
 ORDER BY
-    EXTRACT(ISODOW FROM s.sale_date),
+    CONCAT(TO_CHAR(s.sale_date, 'ID'), ' ', TO_CHAR(s.sale_date, 'Day')),
     name;
 
 /* Step 6.1. Looking for the number of customers of different age groups.*/
@@ -85,44 +83,28 @@ GROUP BY age_category
 ORDER BY age_category;
  
 /* Step 6.2. Looking for the income from customers and their number per month.*/
-WITH tab AS (
-    SELECT
-        TO_CHAR(s.sale_date, 'YYYY-MM') AS date,
-        -- finding out a month of year
-        c.customer_id AS customer_id,
-        SUM(s.quantity * p.price) AS customer_income
-        -- looking for the total income from every customer per month
-    FROM customers AS c
+SELECT
+    TO_CHAR(s.sale_date, 'YYYY-MM') AS date,
+    -- finding out a month of year
+    COUNT(distinct c.customer_id) AS total_customers,
+    -- counting the number of unique customers
+    SUM(s.quantity * p.price) AS income
+    -- looking for the total income from all customer per month
+FROM customers AS c
     LEFT JOIN sales AS s
         ON c.customer_id = s.customer_id
     INNER JOIN products AS p
         ON p.product_id = s.product_id
-    GROUP BY TO_CHAR(s.sale_date, 'YYYY-MM'), c.customer_id
-    ORDER BY TO_CHAR(s.sale_date, 'YYYY-MM')
-)
-
-SELECT
-    date,
-    COUNT(customer_id) AS total_customers,
-    -- counting the number of unique customers
-    SUM(customer_income) AS income
-    -- looking for the total income from all customer per month
-FROM tab
-GROUP BY date;
+GROUP BY TO_CHAR(s.sale_date, 'YYYY-MM')
+ORDER BY TO_CHAR(s.sale_date, 'YYYY-MM');
 
 /* Step 6.3. Looking foк the first customer's purchase with discont*/
-WITH data_mart AS (
--- joining the tables to get data for analysis
+WITH tab AS (
     SELECT
-        c.customer_id AS customer_id,
-        c.first_name AS customer_first_name,
-        c.last_name AS customer_last_name,
-        s.quantity,
+        CONCAT(c.first_name, ' ', c.last_name) AS customer,
         s.sale_date,
-        p.name,
-        p.price,
-        e.first_name AS seller_first_name,
-        e.last_name AS seller_last_name
+        CONCAT(e.first_name, ' ', e.last_name) AS seller,
+        ROW_NUMBER() OVER (PARTITION BY CONCAT(c.first_name, ' ', c.last_name) ORDER BY sale_date) AS rn
     FROM customers AS c
     LEFT JOIN sales s
         ON c.customer_id = s.customer_id
@@ -130,36 +112,14 @@ WITH data_mart AS (
         ON p.product_id = s.product_id
     INNER JOIN employees e
         ON e.employee_id = s.sales_person_id
-    ORDER BY c.customer_id, s.sale_date
-),
-
-data_mart1 AS (
--- choosing the customers with discount price
-    SELECT
-        customer_id,
-        CONCAT(customer_first_name, ' ', customer_last_name) AS customer,
-        sale_date,
-        CONCAT(seller_first_name, ' ', seller_last_name) AS seller,
-        price
-    FROM data_mart
     WHERE price = 0
-),
-
-data_mart2 AS (
--- numbering discount prices partition by customer
-    SELECT
-        customer_id,
-        customer,
-        sale_date,
-        seller,
-        ROW_NUMBER() OVER (PARTITION BY customer ORDER BY sale_date) AS rn
-    FROM data_mart1
+    ORDER BY c.customer_id, s.sale_date
 )
 
 SELECT
     customer,
     sale_date,
     seller
-FROM data_mart2
-WHERE rn = 1
+FROM tab
+WHERE rn = 1;
 -- choosing the first customer's purchese with discount price
