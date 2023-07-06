@@ -10,7 +10,7 @@ SELECT
     -- combining first_name and last_name into one line
     COUNT(s.sales_id) AS operations,
     -- counting how many operations were done
-    ROUND(SUM(s.quantity * p.price), 0) AS income
+    ROUND(SUM(s.quantity * p.price), 2) AS income
     -- looking for the total income for all of the operations for every single seller
 FROM employees e
 LEFT JOIN sales s
@@ -18,7 +18,7 @@ LEFT JOIN sales s
 LEFT JOIN products p
     ON s.product_id = p.product_id
 GROUP BY CONCAT(e.first_name, ' ', e.last_name)
-ORDER BY ROUND(SUM(s.quantity * p.price), 0) DESC NULLS LAST
+ORDER BY ROUND(SUM(s.quantity * p.price), 2) DESC NULLS LAST
 LIMIT 10;
 
 /* Step 5.2. Looking for the sellers with average income that is less then total average income.
