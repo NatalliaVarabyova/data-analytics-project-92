@@ -61,12 +61,12 @@ LEFT JOIN sales s
 LEFT JOIN products p
     ON s.product_id = p.product_id
 GROUP BY
-    EXTRACT(ISODOW FROM s.sale_date),
+    TO_CHAR(sale_date, 'ID'),
     -- finding out the weekday number where the day of the week as Monday (1) to Sunday (7)
     TO_CHAR(s.sale_date, 'day'),
     CONCAT(e.first_name, ' ', e.last_name)
 ORDER BY
-    EXTRACT(ISODOW FROM s.sale_date),
+    TO_CHAR(sale_date, 'ID'),
     name;
 
 /* Step 6.1. Looking for the number of customers of different age groups.*/
