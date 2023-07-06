@@ -51,8 +51,8 @@ to join the table 'employees' with the table 'sales' and the table sales with th
 SELECT
     CONCAT(e.first_name, ' ', e.last_name) AS name,
     -- combine first_name and last_name into one line
-    CONCAT(TO_CHAR(s.sale_date, 'ID'), ' ', TO_CHAR(s.sale_date, 'Day')) AS weekday,
-    -- finding out the weekday number where the day of the week as Monday (1) to Sunday (7) and a day of week
+    TO_CHAR(s.sale_date, 'day') AS weekday,
+    -- finding out a day of week
     ROUND(SUM(s.quantity * p.price), 0) AS income
     -- looking for the total income for every seller
 FROM employees e
@@ -61,10 +61,12 @@ LEFT JOIN sales s
 LEFT JOIN products p
     ON s.product_id = p.product_id
 GROUP BY
-    CONCAT(TO_CHAR(s.sale_date, 'ID'), ' ', TO_CHAR(s.sale_date, 'Day')),
+    EXTRACT(ISODOW FROM s.sale_date),
+    -- finding out the weekday number where the day of the week as Monday (1) to Sunday (7)
+    TO_CHAR(s.sale_date, 'day'),
     CONCAT(e.first_name, ' ', e.last_name)
 ORDER BY
-    CONCAT(TO_CHAR(s.sale_date, 'ID'), ' ', TO_CHAR(s.sale_date, 'Day')),
+    EXTRACT(ISODOW FROM s.sale_date),
     name;
 
 /* Step 6.1. Looking for the number of customers of different age groups.*/
