@@ -18,7 +18,7 @@ LEFT JOIN sales s
 LEFT JOIN products p
     ON s.product_id = p.product_id
 GROUP BY CONCAT(e.first_name, ' ', e.last_name)
-ORDER BY income DESC NULLS LAST
+ORDER BY ROUND(SUM(s.quantity * p.price), 0) DESC NULLS LAST
 LIMIT 10;
 
 /* Step 5.2. Looking for the sellers with average income that is less then total average income.
