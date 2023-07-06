@@ -65,6 +65,7 @@ GROUP BY
     -- finding out the weekday number where the day of the week as Monday (1) to Sunday (7)
     TO_CHAR(s.sale_date, 'day'),
     CONCAT(e.first_name, ' ', e.last_name)
+HAVING ROUND(SUM(s.quantity * p.price), 0) IS NOT NULL
 ORDER BY
     TO_CHAR(sale_date, 'ID'),
     name;
